@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUILD - Dynamic Dashboard Flow</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .phone-frame { background-color: #ffffff; width: 380px; height: 820px; border-radius: 44px; border: 12px solid #0f172a; padding: 25px 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); position: relative; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .logo { font-weight: 900; font-size: 18px; color: #0f172a; }
+        .badge { background: #e0f2fe; color: #0284c7; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        
+        h2 { font-size: 22px; color: #0f172a; margin: 0 0 8px 0; line-height: 1.2; }
+        p.sub { font-size: 13px; color: #64748b; line-height: 1.4; margin-bottom: 20px; }
+        
+        .upload-btn { background: #e0e7ff; color: #4338ca; border: 2px dashed #a5b4fc; width: 100%; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; box-sizing: border-box; }
+        .upload-btn:hover { background: #c7d2fe; }
+        .or-divider { text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 15px; letter-spacing: 1px; }
+        
+        .time-row { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 16px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
+        .time-label { font-size: 14px; font-weight: 600; color: #334155; }
+        .time-input { width: 50px; padding: 5px; border-radius: 6px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; background: white; }
+        
+        .day-grid-container { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+        .day-grid-title { font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 10px; display: flex; justify-content: space-between;}
+        .days-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+        .day-col { display: flex; flex-direction: column; align-items: center; min-width: 45px; }
+        .day-name { font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 5px; }
+        .day-input { width: 100%; padding: 6px 0; text-align: center; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: bold; }
+        
+        .result-box { background: #1e293b; color: white; padding: 16px; border-radius: 12px; text-align: center; margin-top: 15px; }
+        .result-box span { font-size: 24px; font-weight: 900; color: #10b981; }
+        
+        .timeline-box { border-left: 3px solid #cbd5e1; margin-left: 10px; padding-left: 20px; position: relative; margin-bottom: 20px;}
+        .timeline-item { margin-bottom: 15px; position: relative; }
+        .timeline-item::before { content: ''; position: absolute; left: -27px; top: 2px; width: 12px; height: 12px; background: #2563eb; border-radius: 50%; }
+        .timeline-title { font-weight: 700; font-size: 14px; color: #0f172a; }
+        .timeline-sub { font-size: 12px; color: #64748b; }
+        .secondary-btn { background: transparent; border: 2px solid #cbd5e1; color: #475569; width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
+        .transition-screen { display: none; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; background: #2563eb; color: white; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 20; padding: 30px; box-sizing: border-box; }
+        
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .streak-box { background: #fffbeb; color: #d97706; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; border: 1px solid #fde68a; }
+        .task-card { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 6px solid #2563eb; }
+        .task-card h4 { margin: 0 0 5px 0; font-size: 15px; color: #0f172a; }
+        .task-card p { margin: 0 0 12px 0; font-size: 12px; color: #64748b; }
+        .play-btn { background: #eff6ff; color: #2563eb; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
+
+        .main-btn { background-color: #2563eb; color: white; border: none; width: calc(100% - 40px); padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; position: absolute; bottom: 30px; left: 20px; box-sizing: border-box;}
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    
+    <div id="screen-time" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="header">
+            <div class="logo">◆ BUILD</div>
+            <div class="badge">Month 4, Day 1</div>
+        </div>
+        <h2>Time is your only currency.</h2>
+        <p class="sub">Upload your college timetable, or set your hours manually. We will map your workload around your busiest days.</p>
+
+        <div style="overflow-y: auto; flex-grow: 1; padding-bottom: 70px;">
+            
+            <div class="upload-btn" onclick="simulateOCRUpload()">
+                📷 <span>Upload Timetable (AI Auto-Fill)</span>
+            </div>
+            
+            <div class="or-divider">—— OR ENTER MANUALLY ——</div>
+
+            <div class="day-grid-container">
+                <div class="day-grid-title"><span>🏫 College Hours (Per Day)</span> <span>hrs</span></div>
+                <div class="days-scroll">
+                    <div class="day-col"><div class="day-name">MON</div><input type="number" class="day-input clg-input" value="6" onchange="calcTime()"></div>
+                    <div class="day-col"><div class="day-name">TUE</div><input type="number" class="day-input clg-input" value="8" onchange="calcTime()"></div>
+                    <div class="day-col"><div class="day-name">WED</div><input type="number" class="day-input clg-input" value="4" onchange="calcTime()"></div>
+                    <div class="day-col"><div class="day-name">THU</div><input type="number" class="day-input clg-input" value="6" onchange="calcTime()"></div>
+                    <div class="day-col"><div class="day-name">FRI</div><input type="number" class="day-input clg-input" value="7" onchange="calcTime()"></div>
+                    <div class="day-col"><div class="day-name">SAT</div><input type="number" class="day-input clg-input" value="0" onchange="calcTime()"></div>
+                </div>
+            </div>
+
+            <div class="time-row"><span class="time-label">🛏️ Daily Sleep</span> <input type="number" class="time-input fixed-input" id="t-sleep" value="7" onchange="calcTime()"></div>
+            <div class="time-row"><span class="time-label">☕ Morning / Food</span> <input type="number" class="time-input fixed-input" id="t-life" value="2.5" onchange="calcTime()"></div>
+            <div class="time-row"><span class="time-label">🎮 Free Time (Anti-Burnout)</span> <input type="number" class="time-input fixed-input" id="t-free" value="2" onchange="calcTime()"></div>
+            
+            <div class="result-box">
+                Your Average Career Time:<br>
+                <span id="t-remaining">7.3</span> <span>Hours / Day</span>
+                <p style="font-size: 11px; color: #94a3b8; margin: 5px 0 0 0;">(Light college days = heavier coding load)</p>
+            </div>
+        </div>
+        <button class="main-btn" onclick="goToPreview()">Lock & Generate Path</button>
+    </div>
+
+    <div id="screen-preview" class="hidden" style="flex-direction: column; height: 100%;">
+        <div class="header"><div class="logo">◆ BUILD</div><div class="badge">Preview</div></div>
+        <h2>Your 4-Year Trajectory</h2>
+        <p class="sub">Based on your goal and dynamic daily pacing, here is your path.</p>
+
+        <div style="overflow-y: auto; flex-grow: 1; margin-bottom: 80px;">
+            <div class="timeline-box">
+                <div class="timeline-item"><div class="timeline-title">Months 4-6: C++ Core</div><div class="timeline-sub">Heavier loads mapped to Wed & Sat</div></div>
+                <div class="timeline-item"><div class="timeline-title">Months 7-9: OOPs & Projects</div><div class="timeline-sub">Deploy 2 micro-projects</div></div>
+                <div class="timeline-item"><div class="timeline-title">Year 2: Data Structures</div><div class="timeline-sub">Unlock National Test Level 1</div></div>
+                <div class="timeline-item"><div class="timeline-title">Year 3: Linux & SQL</div><div class="timeline-sub">Target HFT Internship Applications</div></div>
+            </div>
+            
+            <button class="secondary-btn" onclick="alert('Opening adjustment settings... You can slow down the pace or add more free time.')">⚙️ Suggest Changes / Edit Pace</button>
+        </div>
+        <button class="main-btn" onclick="startTransition()">Looks Good, Let's Go</button>
+    </div>
+
+    <div id="screen-transition" class="transition-screen">
+        <h1 style="font-size: 32px; margin-bottom: 20px;">We're ready.</h1>
+        <p style="font-size: 18px; line-height: 1.5; opacity: 0.9;">Let's begin from tomorrow.</p>
+        <p style="font-size: 16px; font-weight: bold; margin-top: 40px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 12px; box-sizing: border-box; width: 100%;">You are done for today.<br>The engine is setting up your workspace.</p>
+    </div>
+
+    <div id="screen-dash" class="hidden" style="flex-direction: column; height: 100%; background: #f8fafc; margin: -25px -20px; padding: 25px 20px; box-sizing: border-box;">
+        <div class="dash-header">
+            <div>
+                <h3 style="margin: 0; color: #0f172a; font-size: 18px;">Good Morning.</h3>
+                <span style="color: #64748b; font-size: 13px;">Heavy College Day (8 hrs) • Light Code Load</span>
+            </div>
+            <div class="streak-box">🔥 1 Day Streak</div>
+        </div>
+
+        <h4 style="margin: 0 0 15px 0; font-size: 14px; text-transform: uppercase; color: #475569;">Today's Roadmap</h4>
+
+        <div style="overflow-y: auto; flex-grow: 1;">
+            <div class="task-card">
+                <h4>1. Theory: Pointers in C++</h4>
+                <p>Curated Video • Only 25 Mins today</p>
+                <button class="play-btn">▶ Start Module</button>
+            </div>
+            <div class="task-card" style="border-left-color: #8b5cf6;">
+                <h4>2. Mandatory Self Care</h4>
+                <p>Log your 2 hours of Free Time to maintain anti-burnout metrics.</p>
+                <button class="play-btn" style="background: #f3e8ff; color: #6d28d9;">Log Time</button>
+            </div>
+            <div class="task-card" style="border-left-color: #cbd5e1; background: #f8fafc;">
+                <h4>3. Heavy Practice (Shifted)</h4>
+                <p>Moved to Wednesday (your 4-hour college day) by the anti-burnout engine.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function simulateOCRUpload() {
+        const btn = document.querySelector('.upload-btn');
+        btn.innerHTML = '⏳ Extracting AI Data...';
+        btn.style.background = '#fef08a';
+        btn.style.color = '#854d0e';
+        
+        setTimeout(() => {
+            const inputs = document.querySelectorAll('.clg-input');
+            inputs[0].value = 5; 
+            inputs[1].value = 9; 
+            inputs[2].value = 3; 
+            inputs[3].value = 7; 
+            inputs[4].value = 6; 
+            inputs[5].value = 0; 
+            
+            btn.innerHTML = '✅ Timetable Synced';
+            btn.style.background = '#dcfce7';
+            btn.style.color = '#166534';
+            btn.style.border = '2px solid #22c55e';
+            calcTime();
+            alert("AI OCR Successful! We extracted your college hours and updated your weekly grid.");
+        }, 1500);
+    }
+
+    function calcTime() {
+        const clgInputs = document.querySelectorAll('.clg-input');
+        let totalClg = 0;
+        clgInputs.forEach(input => totalClg += (parseFloat(input.value) || 0));
+        let avgClg = totalClg / 6;
+        
+        let sleep = parseFloat(document.getElementById('t-sleep').value) || 0;
+        let life = parseFloat(document.getElementById('t-life').value) || 0;
+        let free = parseFloat(document.getElementById('t-free').value) || 0;
+        
+        let remaining = 24 - (sleep + life + free + avgClg);
+        
+        let target = document.getElementById('t-remaining');
+        target.innerText = remaining > 0 ? remaining.toFixed(1) : 0;
+        target.style.color = remaining > 0 ? "#10b981" : "#ef4444";
+    }
+
+    function goToPreview() {
+        document.getElementById('screen-time').classList.add('hidden');
+        document.getElementById('screen-preview').classList.remove('hidden');
+    }
+
+    function startTransition() {
+        document.getElementById('screen-preview').classList.add('hidden');
+        document.getElementById('screen-transition').style.display = 'flex';
+        
+        setTimeout(() => {
+            document.getElementById('screen-transition').style.display = 'none';
+            document.getElementById('screen-dash').classList.remove('hidden');
+            document.getElementById('screen-dash').style.display = 'flex';
+        }, 3500);
+    }
+</script>
+</body>
+</html>
